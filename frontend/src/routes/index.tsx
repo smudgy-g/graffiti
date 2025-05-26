@@ -29,28 +29,19 @@ function App() {
     };
 
     useEffect(() => {
+        // Connection lifecycle events
         socket.connect();
-        // --- DIAGNOSTIC LOGS START ---
-        console.log('useEffect is running!'); // 1. Confirm useEffect execution
-        console.log('Socket instance from useEffect:', socket); // 2. Check the imported socket object
-        console.log(
-            'Socket connection status (at useEffect start):',
-            socket.connected
-        ); // 3. Check initial connection status
-        console.log('Socket target URI (from useEffect):', socket.io.uri); // 4. Confirm the target URL
-        // --- DIAGNOSTIC LOGS END ---
 
-        // 1. Connection lifecycle events
         socket.on('connect', () => {
-            console.log('Socket.IO connected! (from handler)'); // This should log if successful
+            console.log('Socket.IO connected! (from handler)');
         });
 
         socket.on('connect_error', (err) => {
             console.error(
                 'Socket.IO Connection error! (from handler):',
                 err.message
-            ); // **THIS IS THE MOST IMPORTANT LOG TO CHECK!**
-            console.error('Full error object:', err); // Log the full error for more details
+            );
+            console.error('Full error object:', err);
         });
 
         socket.on('disconnect', (reason) => {
@@ -60,20 +51,17 @@ function App() {
             );
         });
 
-        // 2. Custom server-acknowledged connection event (if your server emits it)
         socket.on('connected', (data) => {
             console.log('Server acknowledged connection: (from handler)', data);
         });
 
-        // 3. Application-specific message listeners
-        const handleReceiveMessage = (incomingData) => {
+        // Application-specific message listeners
+        const handleReceiveMessage = (incomingData: string) => {
             setMessages((prevMessages) => [...prevMessages, incomingData]);
         };
         socket.on('recieve_message', handleReceiveMessage);
 
-        // --- Cleanup function ---
         return function cleanup() {
-            console.log('useEffect cleanup running!'); // Confirm cleanup execution
             socket.off('connect');
             socket.off('connect_error');
             socket.off('disconnect');
@@ -81,7 +69,7 @@ function App() {
             socket.off('recieve_message', handleReceiveMessage);
             socket.disconnect();
         };
-    }, []); // Empty dependency array: runs once on mount, cleans up on unmount
+    }, []);
 
     return (
         <div className="text-center">
