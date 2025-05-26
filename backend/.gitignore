@@ -1,0 +1,26 @@
+# Python
+############
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+bin/
+include/
+lib/
+local/
+share/
+*.egg-info/
+.coverage
+.mypy_cache/
+.pytest_cache/
+pip-wheel-metadata/
+config.py
+
+# Flask
+############
+instance/           # Flask instance folder (often contains sensitive config, SQLite DBs)
+.flaskenv           # Environment variables loaded by Flask CLI (e.g., FLASK_APP, FLASK_ENV)
