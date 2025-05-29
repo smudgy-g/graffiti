@@ -7,8 +7,6 @@ from app.extensions import socketio
 @socketio.on('connect')
 def test_connect(auth):
     """event listener when client connects to the server"""
-    print(request.sid)
-    print("client has connected")
     emit("connected",{"data":f"id: {request.sid} is connected"})
 
 
@@ -17,7 +15,7 @@ def test_disconnect(reason):
     print('Client disconnected, reason:', reason)
 
 
-@socketio.on('send_message')
-def handle_message(data):
-    """event listener when client types a message"""
-    emit("recieve_message", data, broadcast=True)
+@socketio.on('send_lines')
+def handle_send_lines(data):
+    """event listener when client draws a line"""
+    emit("receive_lines", data, broadcast=True)
