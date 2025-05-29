@@ -22,3 +22,7 @@ button {
 input {
     @apply border rounded-sm px-1.5 py-0.5 text-sm;
 }
+
+.logo {
+    font-family: 'Sedgwick Ave', cursive;
+}

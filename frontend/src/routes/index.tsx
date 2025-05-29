@@ -1,89 +1,78 @@
-import { socket } from '@/socket';
-import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
+import { createFileRoute } from '@tanstack/react-router';
+import PersonIcon from '@mui/icons-material/Person';
+import Button from '@mui/material/Button';
+import DrawArea from '@/components/DrawArea';
+import DrawTools from '@/components/DrawTools';
+import { socket } from '@/socket';
+import type { ILine, TTool } from 'types';
+import useSocket from '@/hooks/useSocket';
 
 export const Route = createFileRoute('/')({
     component: App,
-    loader: async () => {
-        const res = await fetch('/api/auth/test');
-        return await res.json();
-    },
+    // loader: async () => {
+    //     const res = await fetch('/api/auth/test');
+    //     return await res.json();
+    // },
 });
 
 function App() {
-    const { data } = Route.useLoaderData();
-    const [message, setMessage] = useState('');
-    const [messages, setMessages] = useState<any[]>([]);
+    // const { data } = Route.useLoaderData();
+    const [tool, setTool] = useState<TTool>('pen');
+    const [currentColour, setCurrentColour] = useState<string>('#183de7');
+    const [allLines, setAllLines] = useState<ILine[]>([]);
 
-    const handleText = (e: any) => {
-        const inputMessage = e.target.value;
-        setMessage(inputMessage);
+    const { remoteLines, emitLine } = useSocket(socket);
+
+    const handleClearStage = () => {
+        setAllLines([]);
     };
 
-    const handleSubmit = () => {
-        if (!message) {
-            return;
-        }
-        socket.emit('send_message', message);
-        setMessage('');
+    const handleColourChange = (colour: string) => {
+        setCurrentColour(colour);
+    };
+
+    const handleToolChange = (tool: TTool) => {
+        setTool(tool);
+    };
+
+    const handleSetAllLines = (lines: ILine[]) => {
+        setAllLines(lines);
     };
 
     useEffect(() => {
-        // Connection lifecycle events
-        socket.connect();
-
-        socket.on('connect', () => {
-            console.log('Socket.IO connected! (from handler)');
-        });
-
-        socket.on('connect_error', (err) => {
-            console.error(
-                'Socket.IO Connection error! (from handler):',
-                err.message
-            );
-            console.error('Full error object:', err);
-        });
-
-        socket.on('disconnect', (reason) => {
-            console.log(
-                'Socket.IO disconnected, reason: (from handler)',
-                reason
-            );
-        });
-
-        socket.on('connected', (data) => {
-            console.log('Server acknowledged connection: (from handler)', data);
-        });
-
-        // Application-specific message listeners
-        const handleReceiveMessage = (incomingData: string) => {
-            setMessages((prevMessages) => [...prevMessages, incomingData]);
-        };
-        socket.on('recieve_message', handleReceiveMessage);
-
-        return function cleanup() {
-            socket.off('connect');
-            socket.off('connect_error');
-            socket.off('disconnect');
-            socket.off('connected');
-            socket.off('recieve_message', handleReceiveMessage);
-            socket.disconnect();
-        };
-    }, []);
+        // When new remote lines come in, update the combined drawing lines
+        // This effect will run whenever allRemoteLines changes.
+        setAllLines(remoteLines);
+    }, [remoteLines]);
 
     return (
-        <div className="text-center">
-            <main className="min-h-screen flex flex-col space-y-4 items-center justify-center bg-[#282c34] text-white">
-                <p>{data}</p>
+        <main className="h-screen flex flex-col items-center bg-white text-slate-950">
+            <header className="p-4 flex items-center gap-6 border-b w-full justify-between">
+                <h1 className="text-4xl font-semibold logo text-shadow-lg">
+                    Graffiti
+                </h1>
+                <div className="flex items-center gap-6">
+                    <DrawTools
+                        tool={tool}
+                        currentColour={currentColour}
+                        onClear={handleClearStage}
+                        onCurrentColourChange={handleColourChange}
+                        onToolChange={handleToolChange}
+                    />
+                </div>
+                <Button variant="outlined">
+                    <PersonIcon />
+                </Button>
+            </header>
 
-                <input type="text" value={message} onChange={handleText} />
-                <button onClick={handleSubmit}>submit</button>
-                <ul className="list-disc">
-                    {messages.map((msg, i) => {
-                        return <li key={i}>{msg}</li>;
-                    })}
-                </ul>
-            </main>
-        </div>
+            <DrawArea
+                currentColour={currentColour}
+                lines={allLines}
+                tool={tool}
+                onSetLines={handleSetAllLines}
+                emitLine={emitLine}
+            />
+        </main>
     );
 }
