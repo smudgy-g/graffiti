@@ -15,7 +15,12 @@ def test_disconnect(reason):
     print('Client disconnected, reason:', reason)
 
 
-@socketio.on('send_lines')
-def handle_send_lines(data):
+@socketio.on('on_drawing')
+def handle_emit_stroke(data):
     """event listener when client draws a line"""
-    emit("receive_lines", data, broadcast=True)
+    emit("drawing", data, broadcast=True, include_self=False)
+
+@socketio.on('clear_canvas')
+def handle_clear_canvas():
+    """event listener when client clears the canvas"""
+    emit("clear", broadcast=True, include_self=True)

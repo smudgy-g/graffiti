@@ -1,7 +1,9 @@
-export type TTool = 'pen' | 'eraser';
+export type Tool = 'pen' | 'eraser';
 
-export interface ILine {
+export interface Stroke {
+    id: string;
     tool: Tool;
-    points: [number, number]; //[x, y]
-    stroke: string; // line colour
+    points: number[];
+    stroke: string;
+    strokeWidth: number;
 }

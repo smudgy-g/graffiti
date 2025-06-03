@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { Socket } from 'socket.io-client';
-import type { ILine } from 'types';
+import type { Stroke } from 'types';
 
 export default function (socket: Socket) {
-    const [remoteLines, setRemoteLines] = useState<ILine[]>([]);
+    const [remoteStrokes, setRemoteStrokes] = useState<Stroke[]>([]);
 
     useEffect(() => {
         // MARK: SOcket lifecycle listeners
@@ -33,33 +33,45 @@ export default function (socket: Socket) {
         });
 
         // MARK: Application-specific message listeners
-        function handleReceiveLines(payload: ILine) {
-            console.log('payload', payload);
-            setRemoteLines((prevLines) => [...prevLines, payload]);
+        function handleDrawing(payload: Stroke) {
+            setRemoteStrokes((prevLines) => [...prevLines, payload]);
         }
 
-        socket.on('receive_lines', handleReceiveLines);
+        function handleClearCanvas() {
+            console.log('clear canvas!!!');
+
+            setRemoteStrokes([]);
+        }
+
+        socket.on('drawing', handleDrawing);
+        socket.on('clear', handleClearCanvas);
 
         return function cleanup() {
             socket.off('connect');
             socket.off('connect_error');
             socket.off('disconnect');
             socket.off('connected');
-            socket.off('receive_lines', handleReceiveLines);
+            socket.off('drawing', handleDrawing);
+            socket.off('clear', handleClearCanvas);
             socket.disconnect();
         };
     }, [socket]);
 
     // Memoize emitLine to prevent unnecessary re-renders if passed as a prop
-    const emitLine = useCallback(
-        (payload: ILine) => {
-            socket.emit('send_lines', payload);
+    const emitStroke = useCallback(
+        (payload: Stroke) => {
+            socket.emit('on_drawing', payload);
         },
         [socket]
-    ); // Dependency: socket
+    );
+
+    const clearCanvas = useCallback(() => {
+        socket.emit('clear_canvas');
+    }, [socket]);
 
     return {
-        remoteLines,
-        emitLine,
+        remoteStrokes,
+        emitStroke,
+        clearCanvas,
     };
 }

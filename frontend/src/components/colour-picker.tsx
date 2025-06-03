@@ -1,9 +1,9 @@
-import { useRef } from 'react';
+import React from 'react';
 import IconButton from '@mui/material/IconButton';
 import ColorizeIcon from '@mui/icons-material/Colorize';
 
 export default function CustomColourPicker({ colour, onChange }: any) {
-    const colorInputRef = useRef<HTMLInputElement>(null);
+    const colorInputRef = React.useRef<HTMLInputElement>(null);
 
     const openColourPicker = () => {
         if (colorInputRef.current) {

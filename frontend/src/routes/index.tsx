@@ -1,12 +1,13 @@
-import { useEffect, useState } from 'react';
+import React from 'react';
 import { createFileRoute } from '@tanstack/react-router';
-import PersonIcon from '@mui/icons-material/Person';
-import Button from '@mui/material/Button';
-import DrawArea from '@/components/DrawArea';
-import DrawTools from '@/components/DrawTools';
-import { socket } from '@/socket';
-import type { ILine, TTool } from 'types';
+import DrawArea from '@/components/draw-area';
+import DrawTools from '@/components/draw-tools';
+import { socket } from '@/lib/socket';
+import type { Stroke, Tool } from 'types';
 import useSocket from '@/hooks/useSocket';
+import { Button } from '@mui/material';
+import PersonIcon from '@mui/icons-material/Person';
+// import useStateHistory from '@/hooks/useStateHistory';
 
 export const Route = createFileRoute('/')({
     component: App,
@@ -18,33 +19,31 @@ export const Route = createFileRoute('/')({
 
 function App() {
     // const { data } = Route.useLoaderData();
-    const [tool, setTool] = useState<TTool>('pen');
-    const [currentColour, setCurrentColour] = useState<string>('#183de7');
-    const [allLines, setAllLines] = useState<ILine[]>([]);
+    const [tool, setTool] = React.useState<Tool>('pen');
+    const [currentColour, setCurrentColour] = React.useState<string>('#183de7');
+    const [brushSize, setBrushSize] = React.useState<number>(2);
 
-    const { remoteLines, emitLine } = useSocket(socket);
+    const [localStrokes, setLocalStrokes] = React.useState<Stroke[]>([]);
+    const [currentLocalStrokeIndex, setCurrentLocalStrokeIndex] =
+        React.useState(-1);
 
-    const handleClearStage = () => {
-        setAllLines([]);
+    const { remoteStrokes, emitStroke, clearCanvas } = useSocket(socket);
+
+    const undo = () => {
+        setCurrentLocalStrokeIndex((prev) => Math.max(-1, prev - 1));
     };
 
-    const handleColourChange = (colour: string) => {
-        setCurrentColour(colour);
+    const redo = () => {
+        setCurrentLocalStrokeIndex((prev) =>
+            Math.min(localStrokes.length - 1, prev + 1)
+        );
     };
 
-    const handleToolChange = (tool: TTool) => {
-        setTool(tool);
+    const handleClearCanvas = () => {
+        clearCanvas();
+        setLocalStrokes([]);
+        setCurrentLocalStrokeIndex(-1);
     };
-
-    const handleSetAllLines = (lines: ILine[]) => {
-        setAllLines(lines);
-    };
-
-    useEffect(() => {
-        // When new remote lines come in, update the combined drawing lines
-        // This effect will run whenever allRemoteLines changes.
-        setAllLines(remoteLines);
-    }, [remoteLines]);
 
     return (
         <main className="h-screen flex flex-col items-center bg-white text-slate-950">
@@ -56,9 +55,13 @@ function App() {
                     <DrawTools
                         tool={tool}
                         currentColour={currentColour}
-                        onClear={handleClearStage}
-                        onCurrentColourChange={handleColourChange}
-                        onToolChange={handleToolChange}
+                        brushSize={brushSize}
+                        onColourChange={setCurrentColour}
+                        onToolChange={setTool}
+                        onBrushSizeChange={setBrushSize}
+                        onClear={handleClearCanvas}
+                        onRedo={redo}
+                        onUndo={undo}
                     />
                 </div>
                 <Button variant="outlined">
@@ -67,11 +70,15 @@ function App() {
             </header>
 
             <DrawArea
+                remoteStrokes={remoteStrokes}
+                localStrokes={localStrokes}
                 currentColour={currentColour}
-                lines={allLines}
                 tool={tool}
-                onSetLines={handleSetAllLines}
-                emitLine={emitLine}
+                brushSize={brushSize}
+                onSetLocalStrokes={setLocalStrokes}
+                emitStroke={emitStroke}
+                currentLocalStrokeIndex={currentLocalStrokeIndex}
+                setCurrentLocalStrokeIndex={setCurrentLocalStrokeIndex}
             />
         </main>
     );

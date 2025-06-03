@@ -1,6 +1,13 @@
 import { StrictMode } from 'react';
 import ReactDOM from 'react-dom/client';
 import { RouterProvider, createRouter } from '@tanstack/react-router';
+import {
+    StyledEngineProvider,
+    ThemeProvider,
+    type ThemeOptions,
+} from '@mui/material/styles';
+import GlobalStyles from '@mui/material/GlobalStyles';
+import { createTheme } from '@mui/material/styles';
 
 // Import the generated route tree
 import { routeTree } from './routeTree.gen';
@@ -25,13 +32,30 @@ declare module '@tanstack/react-router' {
     }
 }
 
+export const themeOptions: ThemeOptions = {
+    palette: {
+        mode: 'light',
+        primary: {
+            main: '#f4511e',
+        },
+        secondary: {
+            main: '#d81b60',
+        },
+    },
+};
+
 // Render the app
 const rootElement = document.getElementById('app');
 if (rootElement && !rootElement.innerHTML) {
     const root = ReactDOM.createRoot(rootElement);
     root.render(
         <StrictMode>
-            <RouterProvider router={router} />
+            <StyledEngineProvider enableCssLayer>
+                {/* <ThemeProvider theme={themeOptions}> */}
+                <GlobalStyles styles="@layer theme, base, mui, components, utilities;" />
+                <RouterProvider router={router} />
+                {/* </ThemeProvider> */}
+            </StyledEngineProvider>
         </StrictMode>
     );
 }
